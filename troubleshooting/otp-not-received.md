@@ -51,7 +51,7 @@ The push wasn't delivered and Relay had no other channel to try. The `reason` te
 
 **To fix it for this customer:** they can request a new OTP once they're connected, or your bank can send it through another channel it supports.
 
-**To fix it for everyone:** OTPs should always have a fallback. Ask the team that manages your Relay configuration to add one. See [Set up a fallback from push to SMS](https://github.com/ltejdor/technical-writing-samples/tree/main/push-sms-fallback).
+**To fix it for everyone:** OTPs should always have a fallback. Ask the team that manages your Relay configuration to add one.
 
 ## Cause B: The SMS failed
 
