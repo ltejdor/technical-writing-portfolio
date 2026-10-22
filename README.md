@@ -12,20 +12,24 @@ The samples document **Relay**, a fictional notification platform for banks, bas
 
 | Sample | Type | Reader | What it shows |
 |---|---|---|---|
-| [Relay Notifications API](api-reference/README.md) | API reference | Bank developers | A REST API documented in Markdown and in an [OpenAPI 3.0 specification](api-reference/openapi.yaml), with idempotency, statuses and errors explained by what the developer should do. Includes a mock server you can run. |
-| [Receive delivery updates with webhooks](webhooks/README.md) | Developer guide | Backend developers | Signature verification, retries, duplicate events and ordering, with a [working receiver](webhooks/example/) you can test on your own machine in five minutes. |
+| [Relay Notifications API](api-reference/README.md) | API reference | Bank developers | A REST API documented in Markdown and in an [OpenAPI 3.0 specification](api-reference/openapi.yaml), with idempotency, statuses and errors explained by what the developer should do. |
+| [Receive delivery updates with webhooks](webhooks/README.md) | Developer guide | Backend developers | Signature verification, retries, duplicate events and ordering. |
 | [Relay 2026.1 release notes](release-notes/relay-2026.1.md) and [migration guide](release-notes/migration-2026.1.md) | Release notes, migration guide | Developers and operations teams | A breaking change explained by who it affects and what to do, with a "do you need to act?" table and a step-by-step migration with no downtime. |
 | [Mandatory, service and marketing notifications](concepts/notification-categories.md) | Concept | Product, compliance and technical teams | A regulatory topic (PSD2, DORA, GDPR and ePrivacy) explained for a mixed audience, with a decision guide. |
 | [A customer didn't receive an OTP](troubleshooting/otp-not-received.md) | Troubleshooting | Support teams | A diagnosis that starts from what the customer says and leads to a cause and a fix, using the API. |
+| [Relay Playground](https://ltejdor.github.io/technical-writing-portfolio/playground/) | Interactive demo | Anyone | The API and webhooks guides in action: send a notification, watch the fallback happen, and see how a receiver checks signed updates. Runs in the browser. |
 
 ## How these samples were made
 
-<!-- TODO Lucía: write this in your own words once you've run the examples. Suggested points:
-     - What you ran yourself (Prism mock server, webhook receiver) and anything you changed after testing.
-     - Where you used AI and what you decided.
-     - Which parts come from your own domain knowledge (categories, OTP troubleshooting, release cadence in banking). -->
+**How I test documentation at work:** before I publish, I test every procedure in a demo or sandbox environment.
 
-I write in Markdown, keep documentation in Git, and test what I document before I publish it. I use AI as a working partner, and I verify everything myself.
+For public samples I don't have that environment, so I used AI (Claude) to build one. AI is already part of how I work: at my current company it helped me take our client documentation portal live in six months, and I built an interactive demo tool with Claude Code to show users how to use the product.
+
+This is who did what in these samples:
+
+- **What I did:** I decided what to document and for whom, based on what I know about how banks send notifications: fallbacks for one-time passwords, mandatory and marketing notifications, consent, and the slower, yearly release cycle of banking software. I chose the documentation set, defined the reader of each page and reviewed the content for accuracy in my domain.
+- **What Claude did:** it built the test environment these samples needed: the [Relay Playground](https://ltejdor.github.io/technical-writing-portfolio/playground/), an interactive page where anyone can send a notification, watch the push-to-SMS fallback happen, and see how a receiver verifies real signed webhooks. It also drafted the text under my direction.
+- **How we worked together:** I set the reader, the scope and the domain rules. Claude drafted, built and tested. I reviewed, corrected and decided what was published.
 
 ## Skills
 
