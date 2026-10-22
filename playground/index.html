@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relay Playground</title>
+<meta name="description" content="Try how Relay delivers a banking notification and how your system receives delivery updates. Everything runs in your browser.">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --surface-2:#f0f2f5; --border:#dde1e7;
+  --text:#1b1f24; --muted:#5b6470; --accent:#2557d6; --accent-soft:#e7eefc;
+  --ok:#1a7f4b; --ok-soft:#e3f4ea; --bad:#c2372e; --bad-soft:#fbe8e6;
+  --warn:#9a6200; --warn-soft:#fdf1dc; --neutral-soft:#eceff3;
+  --code-bg:#f3f4f6; --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
+  --radius:12px; --on-accent:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1216; --surface:#171b21; --surface-2:#1e232b; --border:#2c333d;
+    --text:#e7eaee; --muted:#9aa4b1; --accent:#7ea2ff; --accent-soft:#1c2740;
+    --ok:#5cc98d; --ok-soft:#15291f; --bad:#ff8b80; --bad-soft:#331a18;
+    --warn:#f0b75a; --warn-soft:#2f2412; --neutral-soft:#232932;
+    --code-bg:#12161b; --shadow:none; --on-accent:#0f1216;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1216; --surface:#171b21; --surface-2:#1e232b; --border:#2c333d;
+  --text:#e7eaee; --muted:#9aa4b1; --accent:#7ea2ff; --accent-soft:#1c2740;
+  --ok:#5cc98d; --ok-soft:#15291f; --bad:#ff8b80; --bad-soft:#331a18;
+  --warn:#f0b75a; --warn-soft:#2f2412; --neutral-soft:#232932;
+  --code-bg:#12161b; --shadow:none; --on-accent:#0f1216;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 16px 64px}
+header h1{font-size:26px;line-height:1.2;margin:0 0 6px;letter-spacing:-.01em}
+header p{margin:0;color:var(--muted);max-width:68ch}
+.note{display:inline-block;margin-top:10px;font-size:13px;color:var(--muted);background:var(--neutral-soft);border-radius:999px;padding:3px 10px}
+.tabs{display:flex;gap:4px;margin:24px 0 16px;border-bottom:1px solid var(--border)}
+.tab{appearance:none;border:0;background:none;color:var(--muted);font:inherit;font-weight:600;padding:10px 14px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab[aria-selected="true"]{color:var(--text);border-bottom-color:var(--accent)}
+.tab:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.panel[hidden]{display:none}
+.intro{color:var(--muted);margin:0 0 16px;max-width:72ch}
+.grid{display:grid;grid-template-columns:320px 1fr;gap:16px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+.card h2{font-size:15px;margin:0 0 12px}
+.card h3{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:18px 0 8px}
+label.field{display:block;font-size:13px;font-weight:600;margin:0 0 4px}
+select{width:100%;font:inherit;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);margin-bottom:12px}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:14px;margin:0 0 10px}
+.check input{margin-top:3px}
+.hint{font-size:12.5px;color:var(--muted);margin:-6px 0 12px}
+.btn{appearance:none;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);font:inherit;font-weight:600;padding:9px 14px;border-radius:8px;cursor:pointer;width:100%}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.secondary{background:var(--surface);color:var(--accent)}
+.btn-row{display:grid;gap:8px}
+.event-btn{text-align:left;display:block;width:100%;appearance:none;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;padding:10px 12px;border-radius:10px;cursor:pointer}
+.event-btn strong{display:block;font-size:14px}
+.event-btn span{display:block;font-size:12.5px;color:var(--muted)}
+.event-btn:hover:not(:disabled){border-color:var(--accent)}
+.event-btn:disabled{opacity:.5;cursor:not-allowed}
+.right{display:grid;gap:16px;min-width:0}
+.sim{display:grid;grid-template-columns:1fr 200px;gap:16px;align-items:start}
+.timeline{list-style:none;margin:0;padding:0;position:relative}
+.timeline li{position:relative;padding:0 0 14px 28px;animation:in .25s ease-out}
+.timeline li::before{content:"";position:absolute;left:8px;top:22px;bottom:0;width:2px;background:var(--border)}
+.timeline li:last-child::before{display:none}
+.dot{position:absolute;left:0;top:3px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--on-accent);background:var(--muted)}
+.dot.ok{background:var(--ok)} .dot.bad{background:var(--bad)} .dot.warn{background:var(--warn)} .dot.info{background:var(--accent)}
+.t-time{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.t-title{font-weight:600}
+.t-text{color:var(--muted);font-size:14px}
+.chip{display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-top:4px}
+.wait{height:6px;background:var(--surface-2);border-radius:999px;overflow:hidden;margin-top:6px;max-width:260px}
+.wait > div{height:100%;width:0;background:var(--warn);transition:width linear}
+@keyframes in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.empty{color:var(--muted);font-size:14px;padding:8px 0}
+.phone{border:2px solid var(--border);border-radius:26px;padding:10px 10px 18px;background:var(--surface-2);min-height:300px;position:relative}
+.phone .bar{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);padding:0 6px 8px}
+.phone .bar .off{color:var(--bad);font-weight:600}
+.phone .screen-label{font-size:11px;color:var(--muted);text-align:center;margin-top:60px}
+.msg{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px 10px;font-size:12.5px;margin-bottom:8px;animation:in .3s ease-out}
+.msg .from{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:2px}
+.msg.sms{background:var(--ok-soft);border-color:transparent}
+.phone-caption{font-size:12px;color:var(--muted);text-align:center;margin-top:8px}
+.status{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}
+.badge{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--neutral-soft);color:var(--muted)}
+.badge.ok{background:var(--ok-soft);color:var(--ok)} .badge.bad{background:var(--bad-soft);color:var(--bad)}
+.badge.warn{background:var(--warn-soft);color:var(--warn)} .badge.info{background:var(--accent-soft);color:var(--accent)}
+details{border-top:1px solid var(--border);margin-top:12px;padding-top:10px}
+summary{cursor:pointer;font-weight:600;font-size:14px}
+pre{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;overflow:auto;margin:8px 0 0;white-space:pre}
+.req .k{color:var(--muted)}
+mark{background:var(--bad-soft);color:var(--bad);border-radius:3px;padding:0 2px}
+.checks{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.checks li{display:grid;grid-template-columns:24px 1fr;gap:8px;align-items:start;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+.checks .icon{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--neutral-soft);color:var(--muted)}
+.checks li.ok .icon{background:var(--ok);color:var(--on-accent)} .checks li.bad .icon{background:var(--bad);color:var(--on-accent)}
+.checks li.skip{opacity:.55}
+.checks .name{font-weight:600;font-size:14px}
+.checks .why{font-size:13px;color:var(--muted)}
+.result{border-radius:10px;padding:12px 14px;margin-top:12px;font-size:14px}
+.result.ok{background:var(--ok-soft)} .result.bad{background:var(--bad-soft)} .result.info{background:var(--accent-soft)}
+.result strong{display:block;margin-bottom:2px}
+.processed{display:flex;flex-wrap:wrap;gap:6px}
+.processed code{background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:2px 6px}
+.learn{font-size:13.5px;margin-top:10px}
+footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid var(--border);padding-top:16px}
+.theme-toggle{float:right;appearance:none;border:1px solid var(--border);background:var(--surface);color:var(--muted);font:inherit;font-size:13px;border-radius:8px;padding:5px 10px;cursor:pointer}
+@media (max-width:860px){
+  .grid{grid-template-columns:1fr}
+  .sim{grid-template-columns:1fr}
+  .phone{min-height:0;max-width:280px;margin:0 auto}
+  .phone .screen-label{margin:20px 0}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch colour theme">Theme</button>
+  <h1>Relay Playground</h1>
+  <p>See how Relay delivers a notification to a bank's customer, and how the bank's systems receive updates about it. Everything runs in your browser: nothing is sent anywhere.</p>
+  <span class="note">Relay is a fictional notification platform, used as an example in my <a href="https://github.com/ltejdor/technical-writing-portfolio">technical writing portfolio</a>.</span>
+</header>
+
+<div class="tabs" role="tablist" aria-label="Playground sections">
+  <button class="tab" role="tab" id="tab-send" aria-controls="panel-send" aria-selected="true">1. Send a notification</button>
+  <button class="tab" role="tab" id="tab-hooks" aria-controls="panel-hooks" aria-selected="false" tabindex="-1">2. Receive updates</button>
+</div>
+
+<!-- ============ PANEL 1 ============ -->
+<section class="panel" id="panel-send" role="tabpanel" aria-labelledby="tab-send">
+  <p class="intro">Choose a notification and the customer's situation, then send it. Relay tries push first. If the push isn't delivered in time and there's a fallback rule, it sends an SMS instead. Time runs faster here: 30 seconds take 3.</p>
+  <div class="grid">
+    <div class="card">
+      <h2>Send</h2>
+      <label class="field" for="type">Notification</label>
+      <select id="type">
+        <option value="otp">One-time password (mandatory)</option>
+        <option value="card_activity">Card payment alert (service)</option>
+        <option value="marketing">Savings offer (marketing)</option>
+      </select>
+      <label class="field" for="scenario">Customer's situation</label>
+      <select id="scenario">
+        <option value="online">Has the app, phone online</option>
+        <option value="offline">Has the app, phone offline</option>
+        <option value="noapp">Doesn't have the bank's app</option>
+        <option value="badnumber">No app, wrong phone number on file</option>
+      </select>
+      <label class="check"><input type="checkbox" id="fallback" checked> <span>SMS fallback after 30 seconds</span></label>
+      <p class="hint" id="fallbackHint">Recommended for every mandatory notification.</p>
+      <label class="check" id="consentRow" hidden><input type="checkbox" id="consent"> <span>Customer has consented to marketing</span></label>
+      <button class="btn" id="sendBtn" type="button">Send notification</button>
+      <p class="learn">Read more: <a href="https://github.com/ltejdor/technical-writing-portfolio/tree/main/api-reference#statuses">statuses</a> · <a href="https://github.com/ltejdor/technical-writing-portfolio/blob/main/concepts/notification-categories.md">categories</a></p>
+    </div>
+
+    <div class="right">
+      <div class="card">
+        <div class="status" aria-live="polite">
+          <span class="badge" id="statusBadge">Nothing sent yet</span>
+          <span class="t-time" id="clock"></span>
+        </div>
+        <div class="sim">
+          <div>
+            <ol class="timeline" id="timeline"><li class="empty" style="padding-left:0">The steps Relay takes will appear here.</li></ol>
+          </div>
+          <div>
+            <div class="phone" aria-label="Customer's phone">
+              <div class="bar"><span>09:14</span><span id="net">●●● 4G</span></div>
+              <div id="phoneMsgs"><div class="screen-label">Customer's phone</div></div>
+            </div>
+            <div class="phone-caption">What the customer sees</div>
+          </div>
+        </div>
+        <details>
+          <summary>What your developers see in the API</summary>
+          <p class="t-text">The response to <code>GET /notifications/{id}</code> at this moment.</p>
+          <pre id="apiJson">{}</pre>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PANEL 2 ============ -->
+<section class="panel" id="panel-hooks" role="tabpanel" aria-labelledby="tab-hooks" hidden>
+  <p class="intro">Every time a notification changes status, Relay calls the bank's system with a signed message called a <strong>webhook</strong>. The bank's system has to check it before trusting it. Send different messages and watch how the receiver decides. The signatures are real (HMAC-SHA256), calculated in your browser.</p>
+  <div class="grid">
+    <div class="card">
+      <h2>Send a webhook</h2>
+      <div class="btn-row">
+        <button class="event-btn" type="button" data-kind="valid"><strong>A normal update</strong><span>Relay reports an OTP was delivered.</span></button>
+        <button class="event-btn" type="button" data-kind="duplicate" id="dupBtn" disabled><strong>The same update again</strong><span>Relay didn't get an answer and retries.</span></button>
+        <button class="event-btn" type="button" data-kind="tampered"><strong>An altered update</strong><span>Someone changed the content on the way.</span></button>
+        <button class="event-btn" type="button" data-kind="expired"><strong>A replayed update</strong><span>Someone captured a real update and sends it 10 minutes later.</span></button>
+      </div>
+      <h3>Processed so far</h3>
+      <div class="processed" id="processed"><span class="t-text">None yet.</span></div>
+      <button class="btn secondary" type="button" id="resetHooks" style="margin-top:14px">Start again</button>
+      <p class="learn">Read more: <a href="https://github.com/ltejdor/technical-writing-portfolio/tree/main/webhooks">webhooks guide</a></p>
+    </div>
+
+    <div class="right">
+      <div class="card">
+        <h2>What arrives</h2>
+        <pre class="req" id="request"><span class="k">Send a webhook to see the request.</span></pre>
+      </div>
+      <div class="card">
+        <h2>What the bank's receiver checks</h2>
+        <ul class="checks" id="checks">
+          <li data-check="time"><span class="icon">1</span><div><div class="name">Was it signed in the last 5 minutes?</div><div class="why">Stops someone from re-sending an old, real message.</div></div></li>
+          <li data-check="sig"><span class="icon">2</span><div><div class="name">Does the signature match the content?</div><div class="why">Proves Relay sent it and nobody changed it.</div></div></li>
+          <li data-check="dup"><span class="icon">3</span><div><div class="name">Is it new?</div><div class="why">Relay may send the same update twice. Process it only once.</div></div></li>
+        </ul>
+        <div id="result" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Built by Lucía Tejeda Dorado with Claude, as part of a <a href="https://github.com/ltejdor/technical-writing-portfolio">technical writing portfolio</a>. Companion content for business readers: <a href="https://github.com/ltejdor/product-content-portfolio">product content portfolio</a>.
+</footer>
+</div>
+
+<script>
+(() => {
+  // ---------- theme ----------
+  const root = document.documentElement;
+  const toggle = document.getElementById('themeToggle');
+  const stored = (() => { try { return localStorage.getItem('relay-theme'); } catch (e) { return null; } })();
+  if (stored) root.dataset.theme = stored;
+  toggle.addEventListener('click', () => {
+    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('relay-theme', root.dataset.theme); } catch (e) {}
+  });
+
+  // ---------- tabs ----------
+  const tabs = [...document.querySelectorAll('.tab')];
+  function selectTab(tab) {
+    tabs.forEach(t => {
+      const on = t === tab;
+      t.setAttribute('aria-selected', on);
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+  }
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => selectTab(t));
+    t.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+        selectTab(next); next.focus();
+      }
+    });
+  });
+  if (location.hash === '#webhooks') selectTab(tabs[1]);
+
+  // ---------- panel 1: send ----------
+  const $ = id => document.getElementById(id);
+  const typeSel = $('type'), scenSel = $('scenario'), fb = $('fallback'), consent = $('consent');
+  const TYPES = {
+    otp: { category: 'mandatory', template: 'otp_login_v2', text: 'Your code to log in is 482913. It expires in 5 minutes. Never share it.' },
+    card_activity: { category: 'service', template: 'card_payment_v1', text: 'Card payment of €45.00 at Café Central approved.' },
+    marketing: { category: 'marketing', template: 'savings_offer_v3', text: 'New: 2.5% on your savings for 12 months. Tap to find out more.' }
+  };
+  const SPEED = 100;          // 1 simulated second = 100 ms
+  const TIMEOUT = 30;         // push delivery time limit, simulated seconds
+  let runId = 0;
+
+  function syncControls() {
+    const t = typeSel.value;
+    $('consentRow').hidden = t !== 'marketing';
+    if (t === 'otp') { fb.checked = true; $('fallbackHint').textContent = 'Recommended for every mandatory notification.'; }
+    else if (t === 'card_activity') { $('fallbackHint').textContent = 'Recommended for service notifications.'; }
+    else { fb.checked = false; $('fallbackHint').textContent = 'Rarely needed for marketing.'; }
+  }
+  typeSel.addEventListener('change', syncControls);
+  syncControls();
+
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const iso = s => new Date(base + s * 1000).toISOString().replace(/\.\d{3}Z$/, 'Z');
+  let base = Date.now();
+
+  function setBadge(text, cls) { const b = $('statusBadge'); b.textContent = text; b.className = 'badge ' + (cls || ''); }
+  function setClock(s) { $('clock').textContent = s == null ? '' : `+${s} s after sending`; }
+
+  function addStep({ s, title, text, kind = 'info', event, wait }) {
+    const tl = $('timeline');
+    const li = document.createElement('li');
+    const sym = { ok: '✓', bad: '✕', warn: '!', info: '•' }[kind];
+    li.innerHTML = `<span class="dot ${kind}" aria-hidden="true">${sym}</span>
+      <div class="t-time">+${s} s</div><div class="t-title"></div><div class="t-text"></div>
+      ${event ? `<span class="chip" title="Webhook event Relay sends">${event}</span>` : ''}
+      ${wait ? '<div class="wait"><div></div></div>' : ''}`;
+    li.querySelector('.t-title').textContent = title;
+    li.querySelector('.t-text').textContent = text;
+    tl.appendChild(li);
+    return li;
+  }
+
+  function phoneShow(channel, text) {
+    const box = $('phoneMsgs');
+    if (box.querySelector('.screen-label')) box.innerHTML = '';
+    const m = document.createElement('div');
+    m.className = 'msg' + (channel === 'sms' ? ' sms' : '');
+    m.innerHTML = `<div class="from">${channel === 'sms' ? 'SMS · YourBank' : 'YourBank app'}</div><div></div>`;
+    m.lastChild.textContent = text;
+    box.appendChild(m);
+  }
+
+  let state;
+  function render() { $('apiJson').textContent = JSON.stringify(state, null, 2); }
+
+  async function send() {
+    const my = ++runId;
+    const alive = () => my === runId;
+    const t = typeSel.value, sc = scenSel.value, info = TYPES[t];
+    base = Date.now();
+    $('timeline').innerHTML = '';
+    $('phoneMsgs').innerHTML = '<div class="screen-label">Customer\'s phone</div>';
+    $('net').innerHTML = sc === 'offline' ? '<span class="off">No data</span>' : '●●● 4G';
+    state = {
+      id: 'ntf_' + Math.random().toString(36).slice(2, 12).toUpperCase(),
+      customer_id: 'cus_7Q2M9X', notification_type: t, category: info.category,
+      reference: null, status: 'accepted', created_at: iso(0), attempts: []
+    };
+    render(); setBadge('accepted', 'info'); setClock(0);
+    addStep({ s: 0, title: 'Relay accepts the notification', text: `Category: ${info.category}. Relay now decides how to deliver it.`, kind: 'info' });
+    await sleep(600); if (!alive()) return;
+
+    if (t === 'marketing' && !consent.checked) {
+      state.status = 'blocked'; render(); setBadge('blocked', 'warn');
+      addStep({ s: 0, title: 'Blocked: no marketing consent', text: 'Relay checks consent before every marketing message. This customer hasn\'t agreed, so nothing is sent. This is the right outcome, not a failure.', kind: 'warn', event: 'notification.blocked' });
+      return;
+    }
+
+    // push attempt
+    state.status = 'in_progress';
+    const push = { channel: 'push', status: 'sent', reason: null, sent_at: iso(0), updated_at: iso(0) };
+    state.attempts.push(push); render(); setBadge('in_progress', 'info');
+
+    let pushFailedAt = null;
+    if (sc === 'noapp' || sc === 'badnumber') {
+      Object.assign(push, { status: 'not_delivered', reason: 'no_device', updated_at: iso(1) }); render();
+      addStep({ s: 1, title: 'Push not delivered: no device', text: 'The customer has no device registered for the bank\'s app.', kind: 'bad' });
+      pushFailedAt = 1;
+    } else {
+      const li = addStep({ s: 0, title: 'Push sent', text: sc === 'online' ? 'Waiting for the phone to confirm delivery…' : `Waiting up to ${TIMEOUT} s for the phone to confirm delivery…`, kind: 'info', wait: sc !== 'online' });
+      if (sc === 'online') {
+        await sleep(2 * SPEED + 300); if (!alive()) return;
+        Object.assign(push, { status: 'delivered', updated_at: iso(2) });
+        state.status = 'delivered'; render(); setBadge('delivered', 'ok'); setClock(2);
+        phoneShow('push', info.text);
+        addStep({ s: 2, title: 'Push delivered', text: 'The phone confirmed delivery. No SMS needed, and no SMS cost.', kind: 'ok', event: 'notification.delivered' });
+        return;
+      }
+      const bar = li.querySelector('.wait > div');
+      requestAnimationFrame(() => { bar.style.transitionDuration = (TIMEOUT * SPEED) + 'ms'; bar.style.width = '100%'; });
+      for (let s = 1; s <= TIMEOUT; s++) { await sleep(SPEED); if (!alive()) return; setClock(s); }
+      Object.assign(push, { status: 'not_delivered', reason: 'delivery_timeout', updated_at: iso(TIMEOUT) }); render();
+      addStep({ s: TIMEOUT, title: 'Push not delivered in time', text: 'No confirmation after 30 seconds. The phone is probably offline. Relay counts delivery, not whether the customer read it.', kind: 'bad' });
+      pushFailedAt = TIMEOUT;
+    }
+    await sleep(500); if (!alive()) return;
+
+    if (!fb.checked) {
+      state.status = 'not_delivered'; render(); setBadge('not_delivered', 'bad');
+      addStep({ s: pushFailedAt, title: 'Not delivered: no fallback', text: t === 'otp' ? 'The customer can\'t log in, and will probably call the bank. Turn on the SMS fallback and try again.' : 'There was no other channel to try.', kind: 'bad', event: 'notification.not_delivered' });
+      return;
+    }
+
+    addStep({ s: pushFailedAt, title: 'Fallback: Relay switches to SMS', text: 'The fallback rule for this notification type says: if push fails, send an SMS.', kind: 'warn', event: 'notification.fallback_triggered' });
+    const sms = { channel: 'sms', status: 'sent', reason: null, sent_at: iso(pushFailedAt), updated_at: iso(pushFailedAt) };
+    state.attempts.push(sms); render();
+    await sleep(3 * SPEED + 500); if (!alive()) return;
+    const end = pushFailedAt + 3; setClock(end);
+    if (sc === 'badnumber') {
+      Object.assign(sms, { status: 'not_delivered', reason: 'invalid_number', updated_at: iso(end) });
+      state.status = 'not_delivered'; render(); setBadge('not_delivered', 'bad');
+      addStep({ s: end, title: 'SMS not delivered: invalid number', text: 'Every channel failed. For a mandatory notification, the bank should be alerted and check the customer\'s phone number.', kind: 'bad', event: 'notification.not_delivered' });
+      return;
+    }
+    Object.assign(sms, { status: 'delivered', updated_at: iso(end) });
+    state.status = 'delivered'; render(); setBadge('delivered', 'ok');
+    phoneShow('sms', info.text);
+    addStep({ s: end, title: 'SMS delivered', text: `The customer got the message ${end} seconds after it was sent.`, kind: 'ok', event: 'notification.delivered' });
+  }
+  $('sendBtn').addEventListener('click', send);
+
+  // ---------- panel 2: webhooks ----------
+  const SECRET = 'whsec_test_secret';
+  const enc = new TextEncoder();
+  let keyPromise = null;
+  function key() {
+    if (!keyPromise) keyPromise = crypto.subtle.importKey('raw', enc.encode(SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    return keyPromise;
+  }
+  async function hmac(msg) {
+    const sig = await crypto.subtle.sign('HMAC', await key(), enc.encode(msg));
+    return [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  const processed = new Set();
+  let lastValid = null;
+
+  function newEvent() {
+    return {
+      id: 'evt_' + Math.random().toString(16).slice(2, 14),
+      type: 'notification.delivered',
+      created_at: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
+      data: { id: 'ntf_01HZX3K8D2', customer_id: 'cus_7Q2M9X', notification_type: 'otp', status: 'delivered' }
+    };
+  }
+
+  const escapeHtml = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  function showRequest(t, sig, body, highlight) {
+    let pretty = escapeHtml(JSON.stringify(JSON.parse(body), null, 2));
+    if (highlight) pretty = pretty.replace(escapeHtml(highlight), `<mark>${escapeHtml(highlight)}</mark>`);
+    $('request').innerHTML =
+`<span class="k">POST</span> /webhooks/relay
+<span class="k">Relay-Signature:</span> t=${t},v1=${sig.slice(0, 24)}…
+
+${pretty}`;
+  }
+
+  function resetChecks() {
+    document.querySelectorAll('#checks li').forEach((li, i) => { li.className = ''; li.querySelector('.icon').textContent = i + 1; });
+    $('result').innerHTML = '';
+  }
+  function mark(check, outcome) {
+    const li = document.querySelector(`#checks li[data-check="${check}"]`);
+    li.className = outcome;
+    li.querySelector('.icon').textContent = outcome === 'ok' ? '✓' : outcome === 'bad' ? '✕' : '–';
+  }
+  function result(kind, title, text) {
+    $('result').innerHTML = `<div class="result ${kind}"><strong></strong><span></span></div>`;
+    $('result').querySelector('strong').textContent = title;
+    $('result').querySelector('span').textContent = text;
+  }
+  function renderProcessed() {
+    const box = $('processed');
+    box.innerHTML = processed.size ? [...processed].map(id => `<code>${id}</code>`).join('') : '<span class="t-text">None yet.</span>';
+  }
+
+  let busy = false;
+  async function sendHook(kind) {
+    if (busy) return; busy = true;
+    try {
+      resetChecks();
+      const now = Math.floor(Date.now() / 1000);
+      let t, body, sig, highlight = null;
+
+      if (kind === 'duplicate' && lastValid) {
+        ({ t, body, sig } = lastValid);
+      } else {
+        const ev = newEvent();
+        body = JSON.stringify(ev);
+        t = kind === 'expired' ? now - 600 : now;
+        sig = await hmac(`${t}.${body}`);
+        if (kind === 'tampered') {
+          body = body.replace('"status":"delivered"', '"status":"not_delivered"');
+          highlight = '"status": "not_delivered"';
+        }
+      }
+      showRequest(t, sig, body, highlight);
+
+      // receiver logic, same order as the webhooks guide
+      await sleep(450);
+      const age = Math.floor(Date.now() / 1000) - t;
+      if (Math.abs(age) > 300) {
+        mark('time', 'bad'); mark('sig', 'skip'); mark('dup', 'skip');
+        result('bad', 'Rejected with 400', `It was signed ${Math.round(age / 60)} minutes ago. A real update would be recent, so this one is treated as a replay and never processed.`);
+        return;
+      }
+      mark('time', 'ok');
+      await sleep(450);
+      const expected = await hmac(`${t}.${body}`);
+      if (expected !== sig) {
+        mark('sig', 'bad'); mark('dup', 'skip');
+        result('bad', 'Rejected with 400', 'The content doesn\'t match the signature, so it was changed after Relay signed it. The receiver ignores it: the customer\'s record still says the OTP was delivered.');
+        return;
+      }
+      mark('sig', 'ok');
+      await sleep(450);
+      const id = JSON.parse(body).id;
+      if (processed.has(id)) {
+        mark('dup', 'bad');
+        result('info', 'Answered 200, but ignored', `${id} was already processed. The 200 tells Relay to stop retrying, and nothing happens twice: no second ticket, no second alert.`);
+        return;
+      }
+      mark('dup', 'ok');
+      processed.add(id); renderProcessed();
+      lastValid = { t, body, sig };
+      $('dupBtn').disabled = false;
+      result('ok', 'Accepted with 200', `${id} is genuine and new, so the bank's system updates the notification as delivered.`);
+    } finally { busy = false; }
+  }
+  document.querySelectorAll('.event-btn').forEach(b => b.addEventListener('click', () => sendHook(b.dataset.kind)));
+  $('resetHooks').addEventListener('click', () => {
+    processed.clear(); lastValid = null; $('dupBtn').disabled = true; renderProcessed(); resetChecks();
+    $('request').innerHTML = '<span class="k">Send a webhook to see the request.</span>';
+  });
+})();
+</script>
+</body>
+</html>
