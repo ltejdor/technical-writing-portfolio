@@ -62,7 +62,7 @@ Do this step **before** your bank upgrades production. After the upgrade, notifi
 If your requests include `channel` to force a channel, move that decision into your notification configuration:
 
 1. List the notification types for which you send `channel`, and the value you send.
-2. For each one, create or update a fallback rule with the same channel as `primary_channel`. See [Set up a fallback from push to SMS](https://github.com/ltejdor/technical-writing-samples/tree/main/push-sms-fallback).
+2. For each one, create or update a fallback rule with the same channel as `primary_channel`.
 3. Remove `channel` from your requests.
 4. In the sandbox, send each notification type and check the `attempts` in [`GET /notifications/{id}`](../api-reference/README.md#get-a-notification) use the channel you expect.
 
