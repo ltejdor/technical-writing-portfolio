@@ -31,7 +31,7 @@ Because the customer has to receive these, Relay:
 
 - Never applies quiet hours. An OTP requested at 3 a.m. is sent at 3 a.m.
 - Doesn't let customers opt out.
-- Should always have a fallback configured. See [Set up a fallback from push to SMS](https://github.com/ltejdor/technical-writing-samples/tree/main/push-sms-fallback).
+- Should always have a fallback configured.
 
 ## Service notifications
 
