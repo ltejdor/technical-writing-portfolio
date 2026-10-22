@@ -1,0 +1,403 @@
+openapi: 3.0.3
+info:
+  title: Relay Notifications API
+  version: "2026.1"
+  description: |
+    Send notifications to your bank's customers and check what happened to them.
+
+    Relay is a fictional notification platform, used here as an example.
+
+    Relay chooses the channel for each notification from your bank's
+    configuration (for example, push first and SMS as a fallback). You tell
+    Relay **what** to notify and **to whom**; Relay decides **how**.
+servers:
+  - url: https://api.relay.example/v1
+    description: Production
+  - url: https://sandbox.api.relay.example/v1
+    description: Sandbox (no messages reach real customers)
+security:
+  - bearerAuth: []
+tags:
+  - name: Notifications
+    description: Send notifications and check their status.
+
+paths:
+  /notifications:
+    post:
+      tags: [Notifications]
+      operationId: sendNotification
+      summary: Send a notification
+      description: |
+        Accepts a notification for delivery. Relay responds as soon as the
+        notification is accepted, before it is delivered. To know whether it
+        reached the customer, check its status or subscribe to webhooks.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationRequest"
+            examples:
+              otp:
+                summary: One-time password
+                value:
+                  customer_id: "cus_7Q2M9X"
+                  notification_type: "otp"
+                  template_id: "otp_login_v2"
+                  variables:
+                    code: "482913"
+                    expires_in_minutes: 5
+                  reference: "login-2026-10-22-0042"
+      responses:
+        "202":
+          description: The notification was accepted for delivery.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+              examples:
+                accepted:
+                  value:
+                    id: "ntf_01HZX3K8D2"
+                    customer_id: "cus_7Q2M9X"
+                    notification_type: "otp"
+                    category: "mandatory"
+                    reference: "login-2026-10-22-0042"
+                    status: "accepted"
+                    created_at: "2026-10-22T09:14:03Z"
+                    attempts: []
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/IdempotencyConflict"
+        "422":
+          $ref: "#/components/responses/Unprocessable"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+    get:
+      tags: [Notifications]
+      operationId: listNotifications
+      summary: List notifications
+      description: |
+        Returns notifications sent to a customer, most recent first. Use it to
+        find a notification when you only know who it was for and roughly when.
+      parameters:
+        - name: customer_id
+          in: query
+          required: true
+          description: The customer whose notifications you want.
+          schema:
+            type: string
+          example: "cus_7Q2M9X"
+        - name: notification_type
+          in: query
+          required: false
+          description: Return only notifications of this type.
+          schema:
+            type: string
+          example: "otp"
+        - name: created_from
+          in: query
+          required: false
+          description: Return only notifications created at or after this time (UTC).
+          schema:
+            type: string
+            format: date-time
+          example: "2026-10-22T09:00:00Z"
+        - name: created_to
+          in: query
+          required: false
+          description: Return only notifications created before this time (UTC).
+          schema:
+            type: string
+            format: date-time
+          example: "2026-10-22T10:00:00Z"
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of notifications to return.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        "200":
+          description: A list of notifications.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Notification"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /notifications/{notification_id}:
+    get:
+      tags: [Notifications]
+      operationId: getNotification
+      summary: Get a notification
+      description: |
+        Returns a notification with every delivery attempt Relay made, in order.
+      parameters:
+        - name: notification_id
+          in: path
+          required: true
+          description: The ID Relay returned when you sent the notification.
+          schema:
+            type: string
+          example: "ntf_01HZX3K8D2"
+      responses:
+        "200":
+          description: The notification.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+              examples:
+                deliveredBySms:
+                  summary: Push not delivered, SMS fallback delivered
+                  value:
+                    id: "ntf_01HZX3K8D2"
+                    customer_id: "cus_7Q2M9X"
+                    notification_type: "otp"
+                    category: "mandatory"
+                    reference: "login-2026-10-22-0042"
+                    status: "delivered"
+                    created_at: "2026-10-22T09:14:03Z"
+                    attempts:
+                      - channel: "push"
+                        status: "not_delivered"
+                        reason: "delivery_timeout"
+                        sent_at: "2026-10-22T09:14:03Z"
+                        updated_at: "2026-10-22T09:14:33Z"
+                      - channel: "sms"
+                        status: "delivered"
+                        reason: null
+                        sent_at: "2026-10-22T09:14:33Z"
+                        updated_at: "2026-10-22T09:14:36Z"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: |
+        An access token obtained with the OAuth 2.0 client credentials flow.
+        Tokens expire after one hour.
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: |
+        A unique value you generate for each notification, such as a UUID.
+        If a request times out and you retry it with the same key, Relay
+        doesn't send the notification twice. Keys are kept for 24 hours.
+      schema:
+        type: string
+        maxLength: 64
+      example: "3f1c9a2e-6b7d-4e0a-9c55-0d2f8e71b4aa"
+
+  schemas:
+    NotificationRequest:
+      type: object
+      required: [customer_id, notification_type, template_id]
+      properties:
+        customer_id:
+          type: string
+          description: Your bank's identifier for the customer, as registered in Relay.
+        notification_type:
+          type: string
+          description: |
+            The type of notification, as configured for your bank (for example
+            `otp`, `security_alert`, `card_activity`). The type decides the
+            category, the channels and the fallback rules.
+        template_id:
+          type: string
+          description: The template that contains the message text for each channel and language.
+        variables:
+          type: object
+          additionalProperties: true
+          description: Values to insert into the template, such as an amount or a code.
+        reference:
+          type: string
+          maxLength: 128
+          description: |
+            Your own reference for this notification, for example the ID of the
+            transaction that triggered it. Relay returns it in responses and
+            webhooks so you can match them to your records.
+
+    Notification:
+      type: object
+      required: [id, customer_id, notification_type, category, status, created_at, attempts]
+      properties:
+        id:
+          type: string
+          description: Relay's identifier for the notification.
+        customer_id:
+          type: string
+        notification_type:
+          type: string
+        category:
+          $ref: "#/components/schemas/Category"
+        reference:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/NotificationStatus"
+        created_at:
+          type: string
+          format: date-time
+        attempts:
+          type: array
+          description: Every delivery attempt, in the order Relay made them.
+          items:
+            $ref: "#/components/schemas/Attempt"
+
+    Category:
+      type: string
+      enum: [mandatory, service, marketing]
+      description: |
+        Set by your notification configuration, not by the request.
+        - `mandatory`: the customer must receive it (OTPs, security alerts, notices required by law).
+        - `service`: useful information about the customer's products (card activity, balance alerts).
+        - `marketing`: promotional content. Sent only to customers who have given consent.
+
+    NotificationStatus:
+      type: string
+      enum: [accepted, in_progress, delivered, not_delivered, blocked]
+      description: |
+        - `accepted`: Relay has the notification and hasn't sent it yet.
+        - `in_progress`: Relay is sending it, or waiting to decide whether to use the fallback.
+        - `delivered`: one attempt was delivered.
+        - `not_delivered`: every attempt failed.
+        - `blocked`: Relay didn't send it, for example because the customer hasn't consented to marketing.
+
+    Attempt:
+      type: object
+      required: [channel, status, sent_at, updated_at]
+      properties:
+        channel:
+          type: string
+          enum: [push, sms, email]
+        status:
+          type: string
+          enum: [sent, delivered, not_delivered]
+          description: |
+            - `sent`: handed to the channel provider; no delivery confirmation yet.
+            - `delivered`: the provider confirmed delivery to the device or inbox.
+            - `not_delivered`: the provider reported a failure, or the time limit ended without confirmation.
+        reason:
+          type: string
+          nullable: true
+          enum: [delivery_timeout, no_device, invalid_number, carrier_rejected, provider_error, null]
+          description: Why the attempt wasn't delivered. `null` when it was delivered or is still pending.
+        sent_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: A stable code you can use in your own error handling.
+        message:
+          type: string
+          description: A human-readable explanation. Don't parse it; it may change.
+        field:
+          type: string
+          nullable: true
+          description: The request field that caused the error, if any.
+
+  responses:
+    BadRequest:
+      description: The request is malformed or a required field is missing.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: "missing_field"
+            message: "customer_id is required."
+            field: "customer_id"
+    Unauthorized:
+      description: The access token is missing, invalid or expired.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: "invalid_token"
+            message: "The access token has expired."
+            field: null
+    NotFound:
+      description: No notification with this ID exists for your bank.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: "not_found"
+            message: "Notification ntf_01HZX3K8D2 was not found."
+            field: null
+    IdempotencyConflict:
+      description: The idempotency key was already used with a different request body.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: "idempotency_key_reused"
+            message: "This Idempotency-Key was used with a different request."
+            field: null
+    Unprocessable:
+      description: The request is well formed but Relay can't act on it.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: "unknown_notification_type"
+            message: "Notification type 'otp_login' isn't configured for your bank."
+            field: "notification_type"
+    TooManyRequests:
+      description: You've sent too many requests. Wait for the number of seconds in the `Retry-After` header.
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: "rate_limited"
+            message: "Too many requests. Retry after 2 seconds."
+            field: null
