@@ -8,13 +8,18 @@ Use this page when a customer tells your bank that a one-time password (OTP) nev
 
 ## Before you begin
 
-Ask the customer for:
+Cases usually reach second-line support from first-line agents. Check that the ticket includes the following, and ask the customer only for what's missing:
 
-- When they tried to log in or pay, as precisely as possible.
-- Whether they received **nothing**, or received the OTP **late**.
-- The phone number they expected the SMS on, if it was SMS.
+| Information | Why you need it |
+|---|---|
+| The customer's `customer_id` in Relay | To find their notifications. |
+| What they were doing: logging in, approving a payment or something else | Tells you which notification type to look for. |
+| When it happened, and in which time zone | Relay records times in UTC. |
+| Whether they received nothing, or received the code late | They have different causes. See [Step 2](#step-2-read-the-attempts). |
+| Whether they requested more than one code | In most banks, a new code cancels the previous one. An earlier code arriving late can look like a failure. |
+| Whether they're abroad, or recently changed phone or number | These are common causes of push and SMS failures. |
 
-You need the customer's `customer_id` in Relay.
+> Never ask the customer for the OTP code, and never write it in the ticket.
 
 ## Step 1: Find the notification
 
