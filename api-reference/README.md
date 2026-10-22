@@ -17,7 +17,7 @@ Use the Relay Notifications API to send notifications to your bank's customers a
 - [List notifications](#list-notifications)
 - [Statuses](#statuses)
 - [Errors](#errors)
-- [Try the API with a mock server](#try-the-api-with-a-mock-server)
+- [See it in action](#see-it-in-action)
 
 ## How the API works
 
@@ -266,36 +266,6 @@ Don't parse `message`. It's for people and may change.
 | `429` | `rate_limited` | Wait for the seconds in the `Retry-After` header, then retry with the same `Idempotency-Key`. |
 | `5xx` | — | Retry with the same `Idempotency-Key`, waiting longer between each try. |
 
-## Try the API with a mock server
+## See it in action
 
-You can explore the API on your own machine without a Relay account. [Prism](https://github.com/stoplightio/prism) reads `openapi.yaml` and answers requests with the examples in the specification.
-
-You need [Node.js](https://nodejs.org/) installed.
-
-1. From this folder, start the mock server:
-
-   ```bash
-   npx @stoplight/prism-cli mock openapi.yaml
-   ```
-
-   Prism starts on `http://127.0.0.1:4010`.
-
-2. In another terminal, send a notification:
-
-   ```bash
-   curl -X POST http://127.0.0.1:4010/notifications \
-     -H "Authorization: Bearer test" \
-     -H "Idempotency-Key: 3f1c9a2e-6b7d-4e0a-9c55-0d2f8e71b4aa" \
-     -H "Content-Type: application/json" \
-     -d '{"customer_id": "cus_7Q2M9X", "notification_type": "otp", "template_id": "otp_login_v2"}'
-   ```
-
-   You get the `202` example response.
-
-3. Try the same request without the `Idempotency-Key` header. Prism checks every request against the specification, so it returns an error status instead of `202`.
-
-   The error body is one of the examples in the specification, so it won't describe your mistake. To see what was wrong, look at the terminal where Prism is running:
-
-   ```text
-   Violation: request.header Request header must have required property 'idempotency-key'
-   ```
+The [Relay Playground](https://ltejdor.github.io/technical-writing-portfolio/playground/) shows what happens after you send a notification: each delivery attempt, the fallback from push to SMS, the final status, and the response your code would get from [Get a notification](#get-a-notification).
