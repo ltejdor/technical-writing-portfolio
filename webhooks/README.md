@@ -4,7 +4,7 @@ This guide shows you how to build an endpoint that receives Relay's delivery upd
 
 **Who this is for:** backend developers at banks who integrate their systems with Relay.
 
-> Relay is a fictional notification platform, used here as an example. The [`example`](example/) folder has a working receiver you can run on your own machine.
+> Relay is a fictional notification platform, used here as an example. To see a receiver at work, open the [Relay Playground](https://ltejdor.github.io/technical-writing-portfolio/playground/#webhooks).
 
 ## Contents
 
@@ -12,7 +12,7 @@ This guide shows you how to build an endpoint that receives Relay's delivery upd
 - [How Relay sends webhooks](#how-relay-sends-webhooks)
 - [Event types](#event-types)
 - [Build your receiver](#build-your-receiver)
-- [Try it on your machine](#try-it-on-your-machine)
+- [See it in action](#see-it-in-action)
 - [Go-live checklist](#go-live-checklist)
 
 ## Why use webhooks
@@ -69,7 +69,7 @@ For mandatory notifications, such as OTPs, act on `notification.not_delivered`: 
 
 ## Build your receiver
 
-Your receiver does three things, in this order. The code below is from [`example/receiver.py`](example/receiver.py).
+Your receiver does three things, in this order. The examples are in Python.
 
 ### Step 1: Verify the signature
 
@@ -131,67 +131,9 @@ If your receiver takes more than 10 seconds, Relay considers the attempt failed 
 | `4xx` or `5xx` | Retries later. |
 | No answer within 10 seconds | Retries later. |
 
-## Try it on your machine
+## See it in action
 
-The [`example`](example/) folder has a receiver and a script that sends signed test events, the way Relay would. You only need Python 3. No other packages.
-
-1. In a terminal, start the receiver:
-
-   ```bash
-   cd example
-   python3 receiver.py
-   ```
-
-   ```text
-   Listening on http://localhost:8000/webhooks/relay  (Ctrl+C to stop)
-   ```
-
-2. In a second terminal, from the same folder, send a valid event:
-
-   ```bash
-   python3 send_test_event.py
-   ```
-
-   The receiver accepts it:
-
-   ```text
-   Accepted evt_dfad92cf2264
-     -> notification.delivered: notification ntf_01HZX3K8D2 for cus_7Q2M9X is now 'delivered'
-   ```
-
-3. Send the same event twice, as Relay would after a lost answer:
-
-   ```bash
-   python3 send_test_event.py --duplicate
-   ```
-
-   The receiver processes it once and ignores the copy, but answers `200` both times:
-
-   ```text
-   Accepted evt_141345ce2d9a
-     -> notification.delivered: ...
-   Duplicate evt_141345ce2d9a: ignored
-   ```
-
-4. Send an event whose body was changed after signing:
-
-   ```bash
-   python3 send_test_event.py --tampered
-   ```
-
-   The receiver rejects it with `400`:
-
-   ```text
-   Rejected: invalid or expired signature
-   ```
-
-5. Send an event signed 10 minutes ago, as in a replay attack:
-
-   ```bash
-   python3 send_test_event.py --expired
-   ```
-
-   The receiver rejects it too.
+In the [Relay Playground](https://ltejdor.github.io/technical-writing-portfolio/playground/#webhooks), send a normal update, the same update twice, an altered one and a replayed one, and watch the receiver run the three checks in this guide. The signatures are real, calculated in your browser.
 
 ## Go-live checklist
 
