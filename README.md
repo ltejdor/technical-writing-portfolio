@@ -8,7 +8,7 @@ My current documentation is client-only and protected behind SSO, so the samples
 
 ## One product, a complete documentation set
 
-Most samples document **Relay**, a fictional notification platform for banks, based on what I know about how banks send notifications. Documenting one product end to end shows how the pieces fit together, the way they would in a real documentation portal: each page has one job, and links to the others instead of repeating them.
+The samples document **Relay**, a fictional notification platform for banks, based on what I know about how banks send notifications. Documenting one product end to end shows how the pieces fit together, the way they would in a real documentation portal: each page has one job, and links to the others instead of repeating them.
 
 | Sample | Type | Reader | What it shows |
 |---|---|---|---|
@@ -18,15 +18,6 @@ Most samples document **Relay**, a fictional notification platform for banks, ba
 | [Mandatory, service and marketing notifications](concepts/notification-categories.md) | Concept | Product, compliance and technical teams | A regulatory topic (PSD2, DORA, GDPR and ePrivacy) explained for a mixed audience, with a decision guide. |
 | [A customer didn't receive an OTP](troubleshooting/otp-not-received.md) | Troubleshooting | Support teams | A diagnosis that starts from what the customer says and leads to a cause and a fix, using the API. |
 
-### More samples
-
-From my [technical writing samples](https://github.com/ltejdor/technical-writing-samples) repository:
-
-| Sample | Type | What it shows |
-|---|---|---|
-| [Build your first Grafana dashboard](https://github.com/ltejdor/technical-writing-samples/tree/main/first-grafana-dashboard) | Tutorial | A beginner tutorial for a product I had never used: I set up the environment from scratch to test and write it. |
-| [Set up a fallback from push to SMS](https://github.com/ltejdor/technical-writing-samples/tree/main/push-sms-fallback) | How-to | The first Relay guide: a configuration task for bank technical teams. |
-
 ## How these samples were made
 
 <!-- TODO Lucía: write this in your own words once you've run the examples. Suggested points:
@@ -34,7 +25,7 @@ From my [technical writing samples](https://github.com/ltejdor/technical-writing
      - Where you used AI and what you decided.
      - Which parts come from your own domain knowledge (categories, OTP troubleshooting, release cadence in banking). -->
 
-I write in Markdown, keep documentation in Git, and test what I document before I publish it. I use AI as a working partner, and I verify everything myself. More detail in [How I work](https://github.com/ltejdor/technical-writing-samples/blob/main/how-i-work.md).
+I write in Markdown, keep documentation in Git, and test what I document before I publish it. I use AI as a working partner, and I verify everything myself.
 
 ## Skills
 
